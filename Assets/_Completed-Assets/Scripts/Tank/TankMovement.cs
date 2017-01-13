@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using SocketIOClient;
+
 
 namespace Complete
 {
@@ -17,11 +19,18 @@ namespace Complete
         private Rigidbody m_Rigidbody;              // Reference used to move the tank.
         private float m_MovementInputValue;         // The current value of the movement input.
         private float m_TurnInputValue;             // The current value of the turn input.
+		private float m_MovementEnemyValue;
+		private float m_TurnEnemyValue;
         private float m_OriginalPitch;              // The pitch of the audio source at the start of the scene.
         private ParticleSystem[] m_particleSystems; // References to all the particles systems used by the Tanks
 
+		string url = "http://127.0.0.1:8080/";
+		public static Client Socket{ get; private set; }
+
         private void Awake ()
         {
+			Socket = new Client (url);
+			Socket.Connect ();
             m_Rigidbody = GetComponent<Rigidbody> ();
         }
 
@@ -67,6 +76,17 @@ namespace Complete
 
             // Store the original pitch of the audio source.
             m_OriginalPitch = m_MovementAudio.pitch;
+
+			Socket.On("enemy_vertical_input", (data) =>
+				{
+					m_MovementEnemyValue = (float) data.Json.args[0];
+					//Debug.Log(data.Json.args[0]);
+				});
+			Socket.On("enemy_horizontal_input", (data) =>
+				{
+					m_TurnEnemyValue = (float) data.Json.args[0];
+					//Debug.Log(data.Json.args[0]);
+				});
         }
 
 
@@ -76,6 +96,17 @@ namespace Complete
             m_MovementInputValue = Input.GetAxis (m_MovementAxisName);
             m_TurnInputValue = Input.GetAxis (m_TurnAxisName);
 
+
+
+			Socket.Emit ("vertical_input", m_MovementInputValue);
+			Socket.Emit ("horizontal_input", m_TurnInputValue);
+
+			if (m_PlayerNumber == 2) {
+				Debug.Log(m_MovementEnemyValue);
+				m_MovementInputValue = m_MovementEnemyValue;
+				m_TurnInputValue = m_TurnEnemyValue;
+			}
+					
             EngineAudio ();
         }
 

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using SocketIOClient;
 
 public class TankMovement : MonoBehaviour
 {
@@ -18,9 +19,14 @@ public class TankMovement : MonoBehaviour
     private float m_TurnInputValue;        
     private float m_OriginalPitch;         
 
+	string url = "http://127.0.0.1:8080/";
+	public static Client Socket{ get; private set; }
+
 
     private void Awake()
     {
+		Socket = new Client (url);
+		Socket.Connect ();
         m_Rigidbody = GetComponent<Rigidbody>();
     }
 
@@ -53,7 +59,7 @@ public class TankMovement : MonoBehaviour
         // Store the player's input and make sure the audio for the engine is playing.
 		m_MovementInputValue = Input.GetAxis(m_MovementAxisName);
 		m_TurnInputValue = Input.GetAxis (m_TurnAxisName);
-
+		Socket.Emit ("key_input", m_MovementInputValue);
 		EngineAudio ();
     }
 
